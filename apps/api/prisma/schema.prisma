@@ -1,0 +1,471 @@
+// Prisma Schema for PumpFlix - Fully Updated
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum CredentialStatus {
+  SUCCESS
+  FAILED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  VOID
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  TRIALING
+  ENDED
+}
+
+enum WebSocketStatus {
+  CONNECTED
+  DISCONNECTED
+  ACTIVE
+  INACTIVE
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+// ------------------ CORE STRUCTURE ------------------
+
+model Organization {
+  id                         String   @id @default(uuid())
+  name                       String
+  slug                       String   @unique
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+  users                      User[]
+  tenants                    Tenant[]
+  templates                  Template[]
+  credentials                Credential[]
+  invoices                   Invoice[]
+  webSocketSessions          WebSocketSession[]
+  templateInstallations      TemplateInstallation[]
+  executionLogs              ExecutionLog[]
+  aiPromptTemplates          AIPromptTemplate[]
+  subscriptions              Subscription[]
+  auditLogs                  AuditLog[]
+  systemAlerts               SystemAlert[]
+  apiKeys                    ApiKey[]
+
+  @@map("Organization")
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id])
+  users     User[]
+  workflows Workflow[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@map("Tenant")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  provider      String?
+  provider_id   String?  @unique @map("provider_id")
+  password_hash String?  @map("password_hash")
+  last_login    DateTime? @map("last_login")
+  avatar        String?
+  role          Role     @default(USER)
+  orgId         String   @map("org_id")
+  org           Organization @relation(fields: [orgId], references: [id])
+  tenantId      String   @map("tenant_id")
+  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  templates     Template[]
+  credentials   Credential[]
+  executionLogs ExecutionLog[]
+  webSocketSessions WebSocketSession[]
+  notifications Notification[]
+  templateInstallations TemplateInstallation[]
+  sessions      UserSession[]
+  aiPromptTemplates AIPromptTemplate[]
+  subscriptions Subscription[]
+  auditLogs     AuditLog[]
+  apiKeys       ApiKey[]
+  systemAlerts  SystemAlert[]
+
+  @@index([email])
+  @@index([provider_id])
+  @@index([orgId])
+  @@index([tenantId])
+  @@index([provider, provider_id])
+  @@map("User")
+}
+
+model Workflow {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  config      Json
+  isActive    Boolean? @default(true) @map("is_active")
+  tenantId    String   @map("tenant_id")
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  executionLogs ExecutionLog[]
+  webSocketSessions WebSocketSession[]
+  credentialUsageLogs CredentialUsageLog[]
+
+  @@index([tenantId])
+  @@map("Workflow")
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String
+  content     Json
+  metadata    Json?
+  createdById String @map("created_by_id")
+  createdBy   User @relation(fields: [createdById], references: [id])
+  orgId       String @map("org_id")
+  org         Organization @relation(fields: [orgId], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  installations TemplateInstallation[]
+
+  @@index([createdById])
+  @@index([orgId])
+  @@map("Template")
+}
+
+model TemplateInstallation {
+  id         String   @id @default(uuid())
+  templateId String @map("template_id")
+  template   Template @relation(fields: [templateId], references: [id])
+  userId     String @map("user_id")
+  user       User @relation(fields: [userId], references: [id])
+  orgId      String @map("org_id")
+  org        Organization @relation(fields: [orgId], references: [id])
+  status     String
+  config     Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([templateId, userId, orgId])
+  @@index([templateId])
+  @@index([userId])
+  @@index([orgId])
+  @@map("TemplateInstallation")
+}
+
+model Credential {
+  id           String   @id @default(uuid())
+  name         String
+  type         String
+  accessToken  String?  @map("access_token")
+  refreshToken String?  @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  config       Json?
+  metadata     Json?
+  userId       String @map("user_id")
+  user         User @relation(fields: [userId], references: [id])
+  orgId        String @map("org_id")
+  org          Organization @relation(fields: [orgId], references: [id])
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  usageLogs    CredentialUsageLog[]
+
+  @@index([userId])
+  @@index([orgId])
+  @@map("Credential")
+}
+
+model ExecutionLog {
+  id         String   @id @default(uuid())
+  status     ExecutionStatus
+  metadata   Json?
+  workflowId String @map("workflow_id")
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
+  userId     String @map("user_id")
+  user       User @relation(fields: [userId], references: [id])
+  orgId      String @map("org_id")
+  org        Organization @relation(fields: [orgId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  credentialUsageLogs CredentialUsageLog[]
+
+  @@index([workflowId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([createdAt])
+  @@map("ExecutionLog")
+}
+
+model CredentialUsageLog {
+  id           String   @id @default(uuid())
+  status       CredentialStatus
+  metadata     Json?
+  credentialId String @map("credential_id")
+  credential   Credential @relation(fields: [credentialId], references: [id])
+  executionId  String @map("execution_id")
+  execution    ExecutionLog @relation(fields: [executionId], references: [id])
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  workflowId   String @map("workflow_id")
+  workflow     Workflow @relation(fields: [workflowId], references: [id])
+
+  @@index([credentialId])
+  @@index([executionId])
+  @@index([workflowId])
+  @@map("CredentialUsageLog")
+}
+
+model Invoice {
+  id        String   @id @default(uuid())
+  number    String   @unique
+  amount    Int /// Amount in the smallest currency unit (e.g., cents)
+  currency  String
+  status    InvoiceStatus /// Using enum for status
+  dueDate   DateTime @map("due_date")
+  orgId     String @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id])
+  items     InvoiceItem[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([status]) /// Index for filtering by status
+  @@index([dueDate]) /// Index for querying by due date
+  @@map("Invoice")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  description String
+  quantity    Int
+  unitPrice   Int /// Unit price in the smallest currency unit
+  total       Int /// Total price for this item in the smallest currency unit
+  invoiceId   String @map("invoice_id")
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([invoiceId])
+  @@map("InvoiceItem")
+}
+
+model WebSocketSession {
+  id         String   @id @default(uuid())
+  workflowId String @map("workflow_id") /// Workflow this session is related to
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
+  clientId   String @map("client_id") /// Unique identifier for the WebSocket client
+  status     WebSocketStatus /// Using enum for status
+  metadata   Json?
+  userId     String @map("user_id")
+  user       User @relation(fields: [userId], references: [id])
+  orgId      String @map("org_id")
+  org        Organization @relation(fields: [orgId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([workflowId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([status]) /// Index for filtering by status
+  @@index([clientId]) /// Index for querying by client ID
+  @@map("WebSocketSession")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  metadata  Json?
+  userId    String @map("user_id")
+  user      User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([type])
+  @@map("Notification")
+}
+
+model SubscriptionPlan {
+  id              String   @id @default(uuid())
+  name            String
+  price           Int /// Price in the smallest currency unit
+  interval        String /// Billing interval (e.g., 'month', 'year')
+  features        String[] /// List of features included
+  executionLimit  Int @map("execution_limit")
+  stripeProductId String? @map("stripe_product_id")
+  stripePriceId   String? @map("stripe_price_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  subscriptions   Subscription[]
+
+  @@map("SubscriptionPlan")
+}
+
+model Subscription {
+  id                   String           @id @default(uuid())
+  orgId                String @map("org_id")
+  org                  Organization     @relation(fields: [orgId], references: [id])
+  userId               String @map("user_id")
+  user                 User             @relation(fields: [userId], references: [id])
+  planId               String @map("plan_id")
+  plan                 SubscriptionPlan @relation(fields: [planId], references: [id])
+  stripeCustomerId     String           @unique @map("stripe_customer_id")
+  stripeSubscriptionId String           @unique @map("stripe_subscription_id")
+  status               SubscriptionStatus /// Using enum for status
+  startedAt            DateTime @map("started_at")
+  trialEndsAt          DateTime @map("trial_ends_at")
+  currentExecutions    Int             @default(0) @map("current_executions")
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([planId])
+  @@index([status]) /// Index for filtering by status
+  @@map("Subscription")
+}
+
+model AIPromptTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  template    String /// Stores the prompt template content
+  variables   String[] /// Stores a list of variable names in the template
+  category    String
+  metadata    Json?
+  createdById String @map("created_by_id")
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  orgId       String @map("org_id")
+  org         Organization @relation(fields: [orgId], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([createdById])
+  @@index([orgId])
+  @@index([category]) /// Index for filtering templates by category
+  @@map("AIPromptTemplate")
+}
+
+model UserSession {
+  id         String   @id @default(uuid())
+  userId     String @map("user_id")
+  user       User     @relation(fields: [userId], references: [id])
+  tokenHash  String   @unique @map("token_hash") /// Stores a secure hash of the session token
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  userAgent  String? @map("user_agent")
+  ipAddress  String? @map("ip_address")
+
+  @@index([userId])
+  @@index([expiresAt]) /// Index for querying expired sessions
+  @@map("UserSession")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String? @map("user_id") /// User who performed the action (optional for system actions)
+  user      User?    @relation(fields: [userId], references: [id])
+  orgId     String? @map("org_id") /// Organization context (optional for global actions)
+  org       Organization? @relation(fields: [orgId], references: [id])
+  action    String @map("action_type") /// Type of action performed (e.g., 'LOGIN', 'WORKFLOW_CREATED')
+  resource  String @map("resource_type") /// Resource type affected by the action (e.g., 'User', 'Workflow')
+  resourceId String? @map("resource_id") /// ID of the resource affected
+  metadata  Json? /// Additional data about the action
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([createdAt]) /// Index for querying by time
+  @@index([action]) /// Index for filtering by action type
+  @@index([resource]) /// Index for filtering by resource type
+  @@index([resourceId]) /// Index for filtering by resource ID
+  @@map("AuditLog")
+}
+
+model SystemAlert {
+  id          String    @id @default(uuid())
+  severity    AlertSeverity /// Using enum for severity
+  message     String
+  details     Json?
+  isResolved  Boolean   @default(false) @map("is_resolved")
+  resolvedById String? @map("resolved_by_id")
+  resolvedBy  User?     @relation(fields: [resolvedById], references: [id])
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  orgId       String? @map("org_id")
+  org         Organization? @relation(fields: [orgId], references: [id])
+
+  @@index([severity]) /// Index for filtering by severity
+  @@index([isResolved]) /// Index for filtering by resolution status
+  @@index([createdAt]) /// Index for querying by time
+  @@index([orgId])
+  @@map("SystemAlert")
+}
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  userId      String @map("user_id") /// User who created the API key
+  user        User     @relation(fields: [userId], references: [id])
+  orgId       String @map("org_id") /// Organization the API key belongs to
+  org         Organization @relation(fields: [orgId], references: [id])
+  isRevoked   Boolean  @default(false) @map("is_revoked")
+  createdAt   DateTime @default(now()) @map("created_at")
+  expiresAt   DateTime? @map("expires_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([key]) /// Index on the hash for lookup
+  @@index([isRevoked]) /// Index for filtering by revoked status
+  @@index([expiresAt]) /// Index for querying by expiry date
+  @@map("ApiKey")
+}

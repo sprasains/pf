@@ -1,0 +1,20 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore build and temporary directories
+.next/
+.turbo/
+dist/
+build/
+
+# Ignore environment files
+.env
+
+# Ignore logs
+logs/
+
+# Ignore pnpm-lock.yaml as pnpm-workspace.yaml is tracked
+pnpm-lock.yaml
+
+# Ignore prisma migrations (optional, but often ignored)
+apps/api/prisma/migrations/ 
