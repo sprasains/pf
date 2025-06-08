@@ -2,8 +2,8 @@ import request from 'supertest';
 import express from 'express';
 import { WorkflowExecutionService } from '../../services/workflowExecution';
 
-jest.mock('../../middleware/auth', () => ({
-  authenticate: (_req: any, _res: any, next: any) => next()
+jest.mock('../../middleware/authMiddleware', () => ({
+  isAuthenticated: (_req: any, _res: any, next: any) => next()
 }));
 
 describe('Workflow Execution Routes', () => {

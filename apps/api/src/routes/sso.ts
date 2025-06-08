@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { isAuthenticated, requirePermission } from '../middleware/auth';
+import { isAuthenticated, requirePermission } from '../middleware/authMiddleware';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
 

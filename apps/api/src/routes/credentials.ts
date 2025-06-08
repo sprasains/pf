@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { CredentialService } from '../services/credentials';
 import { validateRequest } from '../middleware/validation';
-import { authenticate } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { logger } from '../utils/logger';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/error';
@@ -38,7 +38,7 @@ const credentialUsageSchema = z.object({
 // Routes
 router.post(
   '/credentials',
-  authenticate,
+  isAuthenticated,
   validateRequest({ body: createCredentialSchema }),
   async (req, res) => {
     try {
@@ -61,7 +61,7 @@ router.post(
 
 router.get(
   '/credentials',
-  authenticate,
+  isAuthenticated,
   async (req, res) => {
     try {
       const provider = req.query.provider as any;
@@ -84,7 +84,7 @@ router.get(
 
 router.get(
   '/credentials/:id',
-  authenticate,
+  isAuthenticated,
   async (req, res) => {
     try {
       const credential = await CredentialService.getCredential(
@@ -112,7 +112,7 @@ router.get(
 
 router.patch(
   '/credentials/:id',
-  authenticate,
+  isAuthenticated,
   validateRequest({ body: updateCredentialSchema }),
   async (req, res) => {
     try {
@@ -142,7 +142,7 @@ router.patch(
 
 router.delete(
   '/credentials/:id',
-  authenticate,
+  isAuthenticated,
   async (req, res) => {
     try {
       await CredentialService.deleteCredential(
@@ -170,7 +170,7 @@ router.delete(
 
 router.post(
   '/credentials/:id/validate',
-  authenticate,
+  isAuthenticated,
   async (req, res) => {
     try {
       const isValid = await CredentialService.validateCredential(
@@ -235,7 +235,7 @@ router.post(
  *         description: Credential usage logged successfully
  */
 router.post('/usage',
-  authenticate,
+  isAuthenticated,
   validateRequest(credentialUsageSchema),
   async (req, res, next) => {
     try {
@@ -268,7 +268,7 @@ router.post('/usage',
 );
 
 router.get('/',
-  authenticate,
+  isAuthenticated,
   async (req, res, next) => {
     try {
       const userId = req.user!.id;
@@ -288,7 +288,7 @@ router.get('/',
 );
 
 router.post('/',
-  authenticate,
+  isAuthenticated,
   validateRequest(credentialSchema),
   async (req, res, next) => {
     try {

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import * as executionService from '../services/execution';
 
@@ -46,7 +46,7 @@ const router = Router();
  */
 router.post(
   '/',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     body: z.object({
       workflowId: z.string().uuid()
@@ -110,7 +110,7 @@ router.post(
  */
 router.post(
   '/:id/complete',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     params: z.object({
       id: z.string().uuid()
@@ -175,7 +175,7 @@ router.post(
  */
 router.post(
   '/:id/transition',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     params: z.object({
       id: z.string().uuid()
@@ -245,7 +245,7 @@ router.post(
  */
 router.get(
   '/:id/states',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     params: z.object({
       id: z.string().uuid()
@@ -320,7 +320,7 @@ router.get(
  */
 router.get(
   '/:id',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     params: z.object({
       id: z.string().uuid()

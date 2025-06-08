@@ -5,7 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import { logger } from './utils/logger';
-import { sessionManager } from './middleware/auth';
+import { sessionManager } from './middleware/authMiddleware';
 import authRoutes from './routes/auth';
 
 // Import Passport configuration

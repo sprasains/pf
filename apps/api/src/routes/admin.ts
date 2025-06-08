@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient, Role, SubscriptionStatus } from '@prisma/client';
-import { isAuthenticated, hasRoleMiddleware } from '../middleware/auth';
+import { isAuthenticated, hasRoleMiddleware } from '../middleware/authMiddleware';
 import { logger } from '../utils/logger';
 
 const router = Router();
