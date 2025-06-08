@@ -2,9 +2,9 @@ import { Router, Request, Response, NextFunction } from 'express';
 import express from 'express';
 import { body } from 'express-validator';
 import { validationResult } from 'express-validator';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, SubscriptionStatus } from '@prisma/client';
 import { BillingService } from '../services/billing';
-import { isAuthenticated } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validateRequest';
 import Stripe from 'stripe';
 import { logger } from '../utils/logger';
@@ -144,7 +144,7 @@ router.post(
           planId: plan.id,
           stripeCustomerId: customer.id,
           stripeSubscriptionId: subscription.id,
-          status: subscription.status,
+          status: SubscriptionStatus.ACTIVE,
           startedAt: new Date(),
           trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days trial
         },
@@ -210,7 +210,7 @@ router.delete(
 
       await prisma.subscription.update({
         where: { id },
-        data: { status: 'canceled' },
+        data: { status: SubscriptionStatus.CANCELLED },
       });
 
       res.json({ message: 'Subscription canceled successfully' });

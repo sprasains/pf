@@ -1,7 +1,8 @@
+/// <reference path="../types/custom.d.ts" />
 import express from 'express';
 import { PrismaClient, TemplateVersionStatus } from '@prisma/client';
 import { z } from 'zod';
-import { isAuthenticated } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
 

@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import { loginSchema, registerSchema } from '@pumpflix/shared';
 import { AppError } from '../middleware/error';
 import { z } from 'zod';
-import { isAuthenticated, requireRole } from '../middleware/auth';
+import { isAuthenticated, requireRole } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import { authRateLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';

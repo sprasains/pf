@@ -1,3 +1,4 @@
+/// <reference path="../types/custom.d.ts" />
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
@@ -5,7 +6,7 @@ import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
 import { auditLog } from '../utils/audit';
 import { stripe } from '../lib/stripe';
-import { isAuthenticated } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
 import { Queue } from 'bull';
@@ -139,7 +140,7 @@ exportQueue.process(async (job) => {
 router.post('/schedule', isAuthenticated, async (req, res) => {
   try {
     const options = exportOptionsSchema.parse(req.body);
-    const userId = req.user.id;
+    const userId = req.user!.id;
 
     // Create export job record
     const job = await prisma.exportJob.create({
@@ -168,7 +169,7 @@ router.post('/schedule', isAuthenticated, async (req, res) => {
 router.get('/status/:jobId', isAuthenticated, async (req, res) => {
   try {
     const { jobId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user!.id;
 
     const job = await prisma.exportJob.findFirst({
       where: {
@@ -211,15 +212,15 @@ router.get('/workflows/:id/export', requireAuth, exportLimiter, async (req, res)
     }
 
     // Check if user has access to this workflow
-    if (workflow.userId !== req.user.id && !req.user.isAdmin) {
+    if (workflow.userId !== req.user!.id && !req.user!.isAdmin) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
     // Log export event
     await auditLog({
       type: 'EXPORT',
-      userId: req.user.id,
-      orgId: req.user.orgId,
+      userId: req.user!.id,
+      orgId: req.user!.orgId,
       metadata: {
         workflowId: id,
         includeMetadata: includeMetadata === 'true',
@@ -254,7 +255,7 @@ router.get('/analytics/export', requireAuth, exportLimiter, async (req, res) => 
     }).parse({ from, to });
 
     let analytics;
-    if (req.user.isAdmin) {
+    if (req.user!.isAdmin) {
       // Admin gets global analytics
       analytics = await prisma.$transaction([
         prisma.workflowExecution.groupBy({
@@ -291,7 +292,7 @@ router.get('/analytics/export', requireAuth, exportLimiter, async (req, res) => 
           _count: true,
           where: {
             workflow: {
-              orgId: req.user.orgId,
+              orgId: req.user!.orgId,
             },
             createdAt: {
               gte: dateRange.from ? new Date(dateRange.from) : undefined,
@@ -302,7 +303,7 @@ router.get('/analytics/export', requireAuth, exportLimiter, async (req, res) => 
         prisma.workflowExecution.findMany({
           where: {
             workflow: {
-              orgId: req.user.orgId,
+              orgId: req.user!.orgId,
             },
             createdAt: {
               gte: dateRange.from ? new Date(dateRange.from) : undefined,
@@ -319,8 +320,8 @@ router.get('/analytics/export', requireAuth, exportLimiter, async (req, res) => 
     // Log export event
     await auditLog({
       type: 'EXPORT',
-      userId: req.user.id,
-      orgId: req.user.orgId,
+      userId: req.user!.id,
+      orgId: req.user!.orgId,
       metadata: {
         type: 'analytics',
         dateRange,
@@ -345,7 +346,7 @@ router.get('/billing/history', requireAuth, exportLimiter, async (req, res) => {
 
     // Get customer ID from user's org
     const org = await prisma.organization.findUnique({
-      where: { id: req.user.orgId },
+      where: { id: req.user!.orgId },
       select: { stripeCustomerId: true },
     });
 
@@ -374,8 +375,8 @@ router.get('/billing/history', requireAuth, exportLimiter, async (req, res) => {
     // Log export event
     await auditLog({
       type: 'EXPORT',
-      userId: req.user.id,
-      orgId: req.user.orgId,
+      userId: req.user!.id,
+      orgId: req.user!.orgId,
       metadata: {
         type: 'billing',
         dateRange,
@@ -408,8 +409,8 @@ router.get('/templates', isAuthenticated, async (req, res) => {
       where: {
         OR: [
           { isPublic: true },
-          { createdBy: req.user.id },
-          { orgId: req.user.orgId },
+          { createdBy: req.user!.id },
+          { orgId: req.user!.orgId },
         ],
         ...(category && { category: category as string }),
         ...(type && { type: type as string }),
@@ -454,8 +455,8 @@ router.get('/templates/:templateId/versions', isAuthenticated, async (req, res) 
         id: templateId,
         OR: [
           { isPublic: true },
-          { createdBy: req.user.id },
-          { orgId: req.user.orgId },
+          { createdBy: req.user!.id },
+          { orgId: req.user!.orgId },
         ],
       },
       select: {
@@ -497,8 +498,8 @@ router.post('/templates/:templateId/versions', isAuthenticated, async (req, res)
         ...templateData,
         id: templateId,
         version: latestVersion.version + 1,
-        createdBy: req.user.id,
-        orgId: req.user.orgId,
+        createdBy: req.user!.id,
+        orgId: req.user!.orgId,
       },
     });
 
@@ -519,8 +520,8 @@ router.get('/templates/:templateId/versions/:version', isAuthenticated, async (r
         version: parseInt(version),
         OR: [
           { isPublic: true },
-          { createdBy: req.user.id },
-          { orgId: req.user.orgId },
+          { createdBy: req.user!.id },
+          { orgId: req.user!.orgId },
         ],
       },
     });
@@ -546,8 +547,8 @@ router.post('/templates/:templateId/rollback/:version', isAuthenticated, async (
         version: parseInt(version),
         OR: [
           { isPublic: true },
-          { createdBy: req.user.id },
-          { orgId: req.user.orgId },
+          { createdBy: req.user!.id },
+          { orgId: req.user!.orgId },
         ],
       },
     });
@@ -561,8 +562,8 @@ router.post('/templates/:templateId/rollback/:version', isAuthenticated, async (
       data: {
         ...targetVersion,
         version: targetVersion.version + 1,
-        createdBy: req.user.id,
-        orgId: req.user.orgId,
+        createdBy: req.user!.id,
+        orgId: req.user!.orgId,
       },
     });
 
@@ -584,8 +585,8 @@ router.post('/schedule-template/:templateId', isAuthenticated, async (req, res) 
         id: templateId,
         OR: [
           { isPublic: true },
-          { createdBy: req.user.id },
-          { orgId: req.user.orgId },
+          { createdBy: req.user!.id },
+          { orgId: req.user!.orgId },
         ],
       },
     });
@@ -597,7 +598,7 @@ router.post('/schedule-template/:templateId', isAuthenticated, async (req, res) 
     // Create export job
     const job = await prisma.exportJob.create({
       data: {
-        userId: req.user.id,
+        userId: req.user!.id,
         type: template.type,
         status: 'pending',
         format: template.format,
@@ -612,7 +613,7 @@ router.post('/schedule-template/:templateId', isAuthenticated, async (req, res) 
     // Add to queue
     await exportQueue.add(
       {
-        userId: req.user.id,
+        userId: req.user!.id,
         options: {
           format: template.format,
           type: template.type,

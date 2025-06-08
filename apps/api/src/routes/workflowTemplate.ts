@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { WorkflowTemplateService } from '../services/workflowTemplate';
 import { validateRequest } from '../middleware/validateRequest';
-import { isAuthenticated } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { WorkflowService } from '../services/workflowService';
 import { z } from 'zod';
 

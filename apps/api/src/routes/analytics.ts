@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { isAuthenticated } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { sendSuccess, sendError, sendForbidden } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
 import { z } from 'zod';

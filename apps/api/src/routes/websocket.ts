@@ -1,8 +1,9 @@
+/// <reference path="../types/custom.d.ts" />
 import { Router } from 'express';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/error';
-import { isAuthenticated } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import { logger } from '../utils/logger';
 import { metrics } from '../utils/metrics';
@@ -54,9 +55,9 @@ router.post('/sessions/start',
   async (req, res, next) => {
     try {
       const { workflow_id, client_id, metadata } = req.body;
-      const userId = req.user!.id;
+      const userId = (req.user as any).id;
 
-      const result = await prisma.$queryRaw`
+      const result = await prisma.$queryRaw<any[]>`
         SELECT * FROM start_websocket_session(
           ${userId}::uuid,
           ${workflow_id}::uuid,
@@ -70,7 +71,7 @@ router.post('/sessions/start',
         workflowId: workflow_id,
         clientId: client_id
       });
-      metrics.recordWorkflowExecution(workflow_id, 'session_started');
+      metrics.incWorkflowExecutions({ workflow_id: workflow_id, status: 'session_started' });
 
       res.status(201).json(result[0]);
     } catch (error) {
@@ -112,9 +113,9 @@ router.post('/sessions/end',
   async (req, res, next) => {
     try {
       const { session_id } = req.body;
-      const userId = req.user!.id;
+      const userId = (req.user as any).id;
 
-      const result = await prisma.$queryRaw`
+      const result = await prisma.$queryRaw<any[]>`
         SELECT * FROM end_websocket_session(
           ${session_id}::uuid,
           ${userId}::uuid
@@ -125,7 +126,7 @@ router.post('/sessions/end',
         userId,
         sessionId: session_id
       });
-      metrics.recordWorkflowExecution('websocket', 'session_ended');
+      metrics.incWorkflowExecutions({ workflow_id: 'websocket', status: 'session_ended' });
 
       res.json(result[0]);
     } catch (error) {
@@ -139,9 +140,9 @@ router.get('/sessions/active',
   isAuthenticated,
   async (req, res, next) => {
     try {
-      const userId = req.user!.id;
+      const userId = (req.user as any).id;
 
-      const sessions = await prisma.websocketSession.findMany({
+      const sessions = await prisma.webSocketSession.findMany({
         where: {
           user_id: userId,
           ended_at: null
@@ -152,7 +153,7 @@ router.get('/sessions/active',
       });
 
       logger.info('Active WebSocket sessions retrieved', { userId });
-      metrics.recordCacheHit('websocket-sessions');
+      // metrics.recordCacheHit('websocket-sessions'); // Commenting out as it doesn't exist
 
       res.json(sessions);
     } catch (error) {

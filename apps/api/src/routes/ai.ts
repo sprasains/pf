@@ -1,15 +1,14 @@
+/// <reference path="../types/custom.d.ts" />
 import { Router } from 'express';
 import { z } from 'zod';
 import { AIService } from '../services/ai';
 import { validateRequest } from '../middleware/validation';
-import { authenticate } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/error';
 import { metrics } from '../utils/metrics';
-import { rateLimiter } from '../middleware/rateLimiter';
-import { isAuthenticated } from '../middleware/auth';
+import { isAuthenticated, requireRole } from '../middleware/authMiddleware';
 import { generateWorkflow, saveTemplate, getTemplates } from '../controllers/aiController';
 import { apiRateLimiter } from '../middleware/rateLimiter';
 
@@ -40,15 +39,15 @@ const promptTemplateSchema = z.object({
 // Routes
 router.post(
   '/ai/generate',
-  authenticate,
+  isAuthenticated,
   aiRateLimiter,
-  validateRequest({ body: generateWorkflowSchema }),
+  validateRequest(z.object({ body: generateWorkflowSchema})),
   async (req, res) => {
     try {
       const { workflow, promptId } = await AIService.generateWorkflow(
         req.body.prompt,
-        req.user!.id,
-        req.user!.orgId
+        (req.user as any).id,
+        (req.user as any).orgId
       );
 
       res.json({ workflow, promptId });
@@ -64,15 +63,15 @@ router.post(
 
 router.post(
   '/ai/generate-and-save',
-  authenticate,
+  isAuthenticated,
   aiRateLimiter,
-  validateRequest({ body: generateWorkflowSchema }),
+  validateRequest(z.object({ body: generateWorkflowSchema})),
   async (req, res) => {
     try {
       const workflow = await AIService.generateAndSaveWorkflow(
         req.body.prompt,
-        req.user!.id,
-        req.user!.orgId
+        (req.user as any).id,
+        (req.user as any).orgId
       );
 
       res.status(201).json(workflow);
@@ -88,15 +87,15 @@ router.post(
 
 router.get(
   '/ai/prompts',
-  authenticate,
+  isAuthenticated,
   async (req, res) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
       const result = await AIService.listPrompts(
-        req.user!.id,
-        req.user!.orgId,
+        (req.user as any).id,
+        (req.user as any).orgId,
         page,
         limit
       );
@@ -114,13 +113,13 @@ router.get(
 
 router.get(
   '/ai/prompts/:id',
-  authenticate,
+  isAuthenticated,
   async (req, res) => {
     try {
       const prompt = await AIService.getPrompt(
         req.params.id,
-        req.user!.id,
-        req.user!.orgId
+        (req.user as any).id,
+        (req.user as any).orgId
       );
 
       res.json(prompt);
