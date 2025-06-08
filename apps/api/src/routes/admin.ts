@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient, Role, SubscriptionStatus } from '@prisma/client';
-import { isAuthenticated, hasRoleMiddleware } from '../middleware/authMiddleware';
+import { requireAuth } from 'middleware/auth';
+import { hasRoleMiddleware } from '../middleware/authMiddleware';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -37,7 +38,7 @@ const prisma = new PrismaClient();
  */
 router.get(
   '/metrics',
-  isAuthenticated,
+  requireAuth,
   hasRoleMiddleware([Role.ADMIN]),
   async (req, res) => {
     try {
