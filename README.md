@@ -14,7 +14,7 @@ A modern workflow automation platform built with Next.js, Express, and Prisma.
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd workflow
+   cd pumpflix
    ```
 
 2. **Install dependencies**
@@ -112,7 +112,7 @@ workflow/
 ### Frontend (Next.js)
 - Located in `apps/web`
 - Built with Next.js 13
-- Uses Ant Design for UI components
+- Uses Material-UI for UI components
 - Features:
   - Modern dashboard
   - Workflow builder
