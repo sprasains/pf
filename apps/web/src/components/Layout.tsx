@@ -87,6 +87,17 @@ export function Layout({ children }: LayoutProps) {
                 navigate(item.path);
                 setMobileOpen(false);
               }}
+              sx={{
+                '&.Mui-selected': {
+                  background:
+                    'linear-gradient(90deg, rgba(21,101,192,0.9) 0%, rgba(66,165,245,0.9) 100%)',
+                  color: '#fff'
+                },
+                '&.Mui-selected:hover': {
+                  background:
+                    'linear-gradient(90deg, rgba(21,101,192,1) 0%, rgba(66,165,245,1) 100%)'
+                }
+              }}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.text} />
@@ -104,7 +115,9 @@ export function Layout({ children }: LayoutProps) {
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` }
+          ml: { sm: `${drawerWidth}px` },
+          background:
+            'linear-gradient(90deg, rgba(21,101,192,1) 0%, rgba(66,165,245,1) 100%)'
         }}
       >
         <Toolbar>
