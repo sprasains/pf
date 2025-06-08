@@ -1,13 +1,28 @@
 # PumpFlix
 
-A modern workflow automation platform built with Next.js, Express, and Prisma.
+PumpFlix is a workflow automation platform that uses a monorepo structure. The frontend is a Next.js application and the backend is an Express API powered by Prisma and PostgreSQL. Redis and BullMQ provide caching and background job processing.
 
 ## Prerequisites
 
-- Node.js >= 20.0.0
-- PNPM >= 8.0.0
-- PostgreSQL >= 14.0
-- Redis (for background jobs and caching)
+- Node.js >= 20
+- pnpm >= 8
+- PostgreSQL >= 14
+- Redis >= 6
+- Docker (optional for local services)
+
+## Repository Layout
+
+```
+pumpflix/
+├── apps/
+│   ├── api/   # Express + Prisma API
+│   └── web/   # Next.js frontend
+├── packages/
+│   └── shared/  # Shared utilities
+├── docs/        # Additional documentation
+├── docker-compose.yml
+└── ...
+```
 
 ## Getting Started
 
@@ -16,74 +31,49 @@ A modern workflow automation platform built with Next.js, Express, and Prisma.
    git clone <repository-url>
    cd pumpflix
    ```
-
 2. **Install dependencies**
    ```bash
    pnpm install
    ```
-
-3. **Set up environment variables**
-   Create a `.env` file in the root directory with the following variables:
-   ```env
-   # Database
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/pumpflix?schema=public"
-
-   # Redis
-   REDIS_URL="redis://localhost:6379"
-
-   # JWT
-   JWT_SECRET="your-jwt-secret"
-
-   # API
-   PORT=3001
-   NODE_ENV=development
-
-   # Frontend
-   NEXT_PUBLIC_API_URL="http://localhost:3001"
-   ```
-
-4. **Start the database**
+3. **Configure environment variables**
+   Copy `apps/api/.env.local` to `.env` and adjust values as needed. The file contains settings for PostgreSQL, Redis, OAuth credentials, JWT secrets and feature flags.
+4. **Start required services**
    ```bash
-   # Using Docker
    docker-compose up -d
    ```
-
 5. **Run database migrations**
    ```bash
    pnpm prisma migrate dev
    ```
-
 6. **Seed the database (optional)**
    ```bash
    pnpm db:seed
    ```
 
-## Running the Application
+## Running the Applications
 
-### Development Mode
-
-To run both frontend and backend concurrently:
+To start both frontend and backend together:
 ```bash
 pnpm dev:all
 ```
+- Frontend: <http://localhost:3000>
+- API: <http://localhost:3001>
 
-This will start:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-
-### Running Separately
-
-To run frontend only:
+Run them individually:
 ```bash
-pnpm --filter @pumpflix/web dev
-```
-
-To run backend only:
-```bash
-pnpm --filter @pumpflix/api dev
+pnpm --filter @pumpflix/web dev   # Frontend
+pnpm --filter @pumpflix/api dev   # Backend
 ```
 
 ## Available Scripts
+
+- `pnpm dev:all` - start frontend and backend in development
+- `pnpm build` - build all packages and apps
+- `pnpm start` - run apps in production mode
+- `pnpm lint` - lint all packages
+- `pnpm test` - run unit tests
+- `pnpm db:generate` - generate Prisma client
+- `pnpm db:seed` - seed the database
 
 - `pnpm dev:all` - Run both frontend and backend in development mode
 - `pnpm build` - Build all packages and applications
@@ -105,7 +95,7 @@ workflow/
 │   └── shared/       # Shared utilities and types
 ├── prisma/           # Database schema and migrations
 └── docs/            # Documentation
-```
+
 
 ## Development
 
@@ -133,31 +123,22 @@ workflow/
 - Schema defined in `prisma/schema.prisma`
 - Migrations in `prisma/migrations`
 
+
 ## Troubleshooting
 
-1. **Database Connection Issues**
-   - Ensure PostgreSQL is running
-   - Check DATABASE_URL in .env
-   - Run `pnpm prisma generate` to update Prisma client
-
-2. **Port Conflicts**
-   - Frontend runs on port 3000
-   - Backend runs on port 3001
-   - Ensure these ports are available
-
-3. **Dependencies Issues**
-   - Run `pnpm install` to reinstall dependencies
-   - Clear node_modules: `rm -rf node_modules && pnpm install`
+- Ensure PostgreSQL and Redis are running and the connection strings are correct.
+- If ports are already in use, update them in `.env`.
+- Reinstall dependencies with `pnpm install` if builds fail.
 
 ## Contributing
 
-1. Create a new branch
-2. Make your changes
-3. Submit a pull request
+1. Create a feature branch.
+2. Make your changes.
+3. Submit a pull request.
 
 ## License
 
-Repository Overview
+
 
 The project is a monorepo managed with PNPM workspaces. It hosts two main applications under apps/ and a shared package under packages/. The root README describes how to run the apps, the available scripts, and the general structure:
 
@@ -282,5 +263,4 @@ The security guide (docs/SECURITY.md) covers JWT authentication, role-based acce
 docs/MONITORING.md explains how Prometheus and Grafana are set up for metrics and alerts.
 
 By reading through the documentation and exploring the code structure above, a newcomer can gain a comprehensive understanding of how the PumpFlix platform is organized and how to contribute effectively.
-
 

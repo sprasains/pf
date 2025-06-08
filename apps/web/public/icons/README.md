@@ -1,8 +1,8 @@
 # Integration Provider Icons
 
-This directory contains SVG icons for various integration providers. Each icon should be named according to the provider's ID in the `integrationProviders` configuration.
+This directory stores SVG icons for the various integration providers available in PumpFlix. File names should match the provider ID defined in the application configuration.
 
-Required icons:
+Required icons include:
 - google.svg
 - slack.svg
 - github.svg
@@ -12,11 +12,10 @@ Required icons:
 - jira.svg
 - zoom.svg
 
-Each icon should:
-1. Be in SVG format
-2. Have a transparent background
-3. Use a single color (preferably black or the provider's brand color)
-4. Be optimized for web use
-5. Have a recommended size of 32x32 pixels
+Guidelines:
+1. Use SVG format with a transparent background.
+2. Prefer a single color (black or the provider brand color).
+3. Optimize icons for web usage.
+4. Recommended size is 32x32 pixels.
 
-You can obtain these icons from the official brand resources of each provider or use a service like Simple Icons (https://simpleicons.org/). 
+You can source these icons from official brand resources or via [Simple Icons](https://simpleicons.org/).
