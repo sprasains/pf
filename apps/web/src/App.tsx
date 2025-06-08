@@ -1,30 +1,35 @@
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { SnackbarProvider } from 'notistack';
-import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { Login } from './pages/Login';
-import { theme } from './theme';
-import { CircularProgress, Box } from '@mui/material';
+import React, { Suspense } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { CssBaseline } from "@mui/material";
+import { SnackbarProvider } from "notistack";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Login } from "./pages/Login";
+import { ThemeModeProvider } from "./contexts/ThemeContext";
+import { CircularProgress, Box } from "@mui/material";
 
 // Lazy load pages
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Workflows = React.lazy(() => import('./pages/Workflows'));
-const Settings = React.lazy(() => import('./pages/Settings'));
-const Credentials = React.lazy(() => import('./pages/Credentials'));
-const AIBuilder = React.lazy(() => import('./pages/AIBuilder'));
-const AIPrompts = React.lazy(() => import('./pages/AIPrompts'));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Workflows = React.lazy(() => import("./pages/Workflows"));
+const Settings = React.lazy(() => import("./pages/Settings"));
+const Credentials = React.lazy(() => import("./pages/Credentials"));
+const AIBuilder = React.lazy(() => import("./pages/AIBuilder"));
+const AIPrompts = React.lazy(() => import("./pages/AIPrompts"));
 
 const LoadingFallback = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="100vh"
+  >
     <CircularProgress />
   </Box>
 );
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeModeProvider>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
         <AuthProvider>
@@ -86,8 +91,8 @@ function App() {
           </Router>
         </AuthProvider>
       </SnackbarProvider>
-    </ThemeProvider>
+    </ThemeModeProvider>
   );
 }
 
-export default App; 
+export default App;
