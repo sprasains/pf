@@ -69,13 +69,17 @@ export const authRateLimiter = createRateLimiter(authLimiter);
 export const apiRateLimiter = createRateLimiter(apiLimiter);
 
 // Middleware to reset rate limit on successful authentication
-export const resetRateLimit = async (req: Request, res: Response, next: NextFunction) => {
+export const resetRateLimit = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const clientId = getClientIdentifier(req);
   try {
-    const clientId = getClientIdentifier(req);
     await redisClient.del(`ratelimit:auth:${clientId}`);
     next();
   } catch (error) {
     logger.error('Failed to reset auth rate limit', { clientId, error });
     next();
   }
-}; 
+};

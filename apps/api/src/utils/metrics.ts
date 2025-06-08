@@ -29,6 +29,10 @@ class Metrics {
   // Rate limit metrics
   private rateLimitExceeded: Counter;
 
+  // General metrics
+  private errorsTotal: Counter;
+  private notFoundTotal: Counter;
+
   constructor() {
     this.registry = new Registry();
     this.redis = redisClient;
@@ -116,6 +120,16 @@ class Metrics {
       labelNames: ['endpoint']
     });
 
+    this.errorsTotal = new Counter({
+      name: 'errors_total',
+      help: 'Total number of application errors'
+    });
+
+    this.notFoundTotal = new Counter({
+      name: 'not_found_total',
+      help: 'Total number of not found responses'
+    });
+
     // Register metrics with the registry
     this.registry.registerMetric(this.httpRequestDuration);
     this.registry.registerMetric(this.httpRequestsTotal);
@@ -130,6 +144,8 @@ class Metrics {
     this.registry.registerMetric(this.jobProcessingDuration);
     this.registry.registerMetric(this.jobErrors);
     this.registry.registerMetric(this.rateLimitExceeded);
+    this.registry.registerMetric(this.errorsTotal);
+    this.registry.registerMetric(this.notFoundTotal);
   }
 
   // Method to get metrics as a string
@@ -197,6 +213,15 @@ class Metrics {
   // Rate limit metrics
   incRateLimitExceeded(labels: { endpoint: string; }) {
     this.rateLimitExceeded.inc(labels);
+  }
+
+  // General metrics
+  incrementError() {
+    this.errorsTotal.inc();
+  }
+
+  incrementNotFound() {
+    this.notFoundTotal.inc();
   }
 }
 
