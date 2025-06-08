@@ -67,6 +67,9 @@ app.use('/api/admin', adminRoutes);
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Simple health check
+app.get('/api/health', (_, res) => res.send('OK'));
+
 // Error handling
 app.use(errorLogger);
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -75,8 +78,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.API_PORT || process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});
+
+export default app;
