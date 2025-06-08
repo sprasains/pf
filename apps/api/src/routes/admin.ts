@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient, Role, SubscriptionStatus } from '@prisma/client';
-import { requireAuth } from 'middleware/auth';
-import { hasRoleMiddleware } from '../middleware/authMiddleware';
+import { isAuthenticated, hasRoleMiddleware } from '../middleware/authMiddleware';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -38,9 +37,9 @@ const prisma = new PrismaClient();
  */
 router.get(
   '/metrics',
-  requireAuth,
+  isAuthenticated,
   hasRoleMiddleware([Role.ADMIN]),
-  async (req, res) => {
+  async (req: any, res: any, next: any) => {
     try {
       const { start, end } = req.query;
       const startDate = new Date(start as string);
@@ -140,7 +139,7 @@ router.get(
         },
         include: {
           plan: true,
-          organization: true,
+          org: true,
         },
       });
 
@@ -158,7 +157,7 @@ router.get(
           revenue: plan._count.subscriptions * (plan.price || 0),
         })),
         usageViolators: usageViolators.map((sub) => ({
-          name: sub.organization.name,
+          name: sub.org.name,
           plan: sub.plan.name,
           usage: sub.currentExecutions,
           limit: sub.plan?.executionLimit || 0,

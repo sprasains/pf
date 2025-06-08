@@ -1,6 +1,6 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role, Prisma, User as PrismaUser, Organization, Tenant } from '@prisma/client';
 import { isAuthenticated, requireRole } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import { AppError } from '../utils/error';
@@ -99,11 +99,11 @@ const AuditLogFilterSchema = z.object({
 router.get(
   '/logs',
   isAuthenticated,
-  requireRole(['OWNER', 'ADMIN']),
-  validateRequest({ query: AuditLogFilterSchema }),
-  async (req, res, next) => {
+  requireRole([Role.ADMIN]),
+  validateRequest(z.object({ query: AuditLogFilterSchema })),
+  async (req: any, res: Response, next: NextFunction) => {
     try {
-      const {
+      const { 
         startDate,
         endDate,
         actionType,
@@ -112,12 +112,12 @@ router.get(
         offset = 0
       } = req.query;
 
-      const where = {
-        orgId: req.org!.id,
-        ...(startDate && { timestamp: { gte: new Date(startDate as string) } }),
-        ...(endDate && { timestamp: { lte: new Date(endDate as string) } }),
-        ...(actionType && { actionType }),
-        ...(userId && { userId })
+      const where: Prisma.AuditLogWhereInput = {
+        orgId: req.org.id,
+        ...(startDate && { createdAt: { gte: new Date(startDate) } }),
+        ...(endDate && { createdAt: { lte: new Date(endDate) } }),
+        ...(actionType && { action: actionType }),
+        ...(userId && { userId: userId })
       };
 
       const [logs, total] = await Promise.all([
@@ -132,7 +132,7 @@ router.get(
             }
           },
           orderBy: {
-            timestamp: 'desc'
+            createdAt: 'desc'
           },
           take: Number(limit),
           skip: Number(offset)
@@ -141,8 +141,8 @@ router.get(
       ]);
 
       logger.info('Audit logs retrieved', {
-        orgId: req.org!.id,
-        userId: req.user!.id,
+        orgId: req.org.id,
+        userId: req.user.id,
         filters: req.query
       });
 
@@ -190,22 +190,22 @@ router.get(
 router.get(
   '/logs/export',
   isAuthenticated,
-  requireRole(['OWNER']),
-  validateRequest({
+  requireRole([Role.ADMIN]),
+  validateRequest(z.object({
     query: z.object({
       startDate: z.string().datetime().optional(),
       endDate: z.string().datetime().optional()
     })
-  }),
-  async (req, res, next) => {
+  })),
+  async (req: any, res: Response, next: NextFunction) => {
     try {
       const { startDate, endDate } = req.query;
 
       const logs = await prisma.auditLog.findMany({
         where: {
-          orgId: req.org!.id,
-          ...(startDate && { timestamp: { gte: new Date(startDate as string) } }),
-          ...(endDate && { timestamp: { lte: new Date(endDate as string) } })
+          orgId: req.org.id,
+          ...(startDate && { createdAt: { gte: new Date(startDate) } }),
+          ...(endDate && { createdAt: { lte: new Date(endDate) } })
         },
         include: {
           user: {
@@ -215,24 +215,24 @@ router.get(
           }
         },
         orderBy: {
-          timestamp: 'desc'
+          createdAt: 'desc'
         }
       });
 
       const csv = [
         ['Timestamp', 'Action', 'User', 'Details', 'IP Address'].join(','),
         ...logs.map(log => [
-          log.timestamp.toISOString(),
-          log.actionType,
-          log.user.email,
-          JSON.stringify(log.details),
+          log.createdAt.toISOString(),
+          log.action,
+          log.user?.email || 'N/A',
+          JSON.stringify(log.metadata),
           log.ipAddress || ''
         ].join(','))
       ].join('\n');
 
       logger.info('Audit logs exported', {
-        orgId: req.org!.id,
-        userId: req.user!.id,
+        orgId: req.org.id,
+        userId: req.user.id,
         count: logs.length
       });
 

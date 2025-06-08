@@ -16,7 +16,7 @@
     "db:generate": "prisma generate --schema apps/api/prisma/schema.prisma",
     "db:push": "prisma db push --schema apps/api/prisma/schema.prisma",
     "db:seed": "ts-node apps/api/prisma/seed.ts",
-    "dev:all": "concurrently \"pnpm --filter @pumpflix/web dev\" \"pnpm --filter @pumpflix/api dev\""
+    "dev:all": "pnpm concurrently \"pnpm --filter @pumpflix/web dev\" \"pnpm --filter @pumpflix/api dev\""
   },
   "devDependencies": {
     "@faker-js/faker": "^9.8.0",

@@ -1,8 +1,11 @@
-import { Router } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { isAuthenticated } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import * as executionService from '../services/execution';
+import { ExecutionStatus } from '@prisma/client';
+import { AppError } from '../utils/error';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -47,22 +50,26 @@ const router = Router();
 router.post(
   '/',
   isAuthenticated,
-  validateRequest({
+  validateRequest(z.object({
     body: z.object({
       workflowId: z.string().uuid()
     })
-  }),
-  async (req, res, next) => {
+  })),
+  async (req: any, res: Response, next: NextFunction) => {
     try {
-      const { workflowId } = req.body;
+      const { workflowId } = req.body as { workflowId: string };
       const executionId = await executionService.startExecution(
         workflowId,
-        req.user.id,
-        req.user.orgId
+        req.user!.id,
+        req.user!.orgId
       );
       res.json({ executionId });
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      logger.error('Error creating execution:', error);
+      res.status(500).json({ error: 'Failed to create execution' });
     }
   }
 );
@@ -111,23 +118,27 @@ router.post(
 router.post(
   '/:id/complete',
   isAuthenticated,
-  validateRequest({
+  validateRequest(z.object({
     params: z.object({
       id: z.string().uuid()
     }),
     body: z.object({
-      status: z.enum(['SUCCESS', 'ERROR']),
+      status: z.nativeEnum(ExecutionStatus),
       error: z.string().optional()
     })
-  }),
-  async (req, res, next) => {
+  })),
+  async (req: any, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
-      const { status, error } = req.body;
+      const { id } = req.params as { id: string };
+      const { status, error } = req.body as { status: 'SUCCESS' | 'ERROR', error?: string };
       await executionService.completeExecution(id, status, error);
       res.json({ success: true });
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      logger.error('Error completing execution:', error);
+      res.status(500).json({ error: 'Failed to complete execution' });
     }
   }
 );
@@ -176,7 +187,7 @@ router.post(
 router.post(
   '/:id/transition',
   isAuthenticated,
-  validateRequest({
+  validateRequest(z.object({
     params: z.object({
       id: z.string().uuid()
     }),
@@ -184,15 +195,19 @@ router.post(
       toStateId: z.string().uuid(),
       metadata: z.record(z.any()).optional()
     })
-  }),
-  async (req, res, next) => {
+  })),
+  async (req: any, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
-      const { toStateId, metadata } = req.body;
+      const { id } = req.params as { id: string };
+      const { toStateId, metadata } = req.body as { toStateId: string, metadata?: any };
       const transitionId = await executionService.recordStateTransition(id, toStateId, metadata);
       res.json({ transitionId });
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      logger.error('Error transitioning execution status:', error);
+      res.status(500).json({ error: 'Failed to transition execution status' });
     }
   }
 );
@@ -246,18 +261,19 @@ router.post(
 router.get(
   '/:id/states',
   isAuthenticated,
-  validateRequest({
-    params: z.object({
-      id: z.string().uuid()
-    })
-  }),
-  async (req, res, next) => {
+  validateRequest(z.object({ params: z.object({ id: z.string().uuid() })})),
+  async (req: any, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
-      const states = await executionService.getExecutionStates(id);
+      const states = await executionService.getExecutionStates(
+        (req.params as { id: string }).id
+      );
       res.json(states);
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      logger.error('Error getting execution states:', error);
+      res.status(500).json({ error: 'Failed to get execution states' });
     }
   }
 );
@@ -294,7 +310,7 @@ router.get(
  *                     id:
  *                       type: string
  *                       format: uuid
- *                     name:
+ *                     name: 
  *                       type: string
  *                 status:
  *                   type: string
@@ -321,20 +337,24 @@ router.get(
 router.get(
   '/:id',
   isAuthenticated,
-  validateRequest({
-    params: z.object({
-      id: z.string().uuid()
-    })
-  }),
-  async (req, res, next) => {
+  validateRequest(z.object({ params: z.object({ id: z.string().uuid() })})),
+  async (req: any, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
-      const execution = await executionService.getExecutionById(id);
+      const execution = await executionService.getExecutionById(
+        (req.params as { id: string }).id
+      );
+      if (!execution) {
+        throw new AppError('Execution not found', 404);
+      }
       res.json(execution);
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      logger.error('Error getting execution by ID:', error);
+      res.status(500).json({ error: 'Failed to get execution by ID' });
     }
   }
 );
 
-export default router; 
+export default router;
