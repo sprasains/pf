@@ -1,12 +1,10 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { isAuthenticated } from '../middleware/authMiddleware';
 import { sendSuccess, sendError, sendForbidden } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { requireAuth } from '../middleware/auth';
-import { validateRequest } from '../middleware/validate';
+import { isAuthenticated } from '../middleware/authMiddleware';
 
 const router = Router();
 const prismaClient = new PrismaClient();
@@ -55,7 +53,7 @@ const analyticsQuerySchema = z.object({
  *       403:
  *         description: Forbidden
  */
-router.get('/usage', requireAuth, validateRequest({ query: analyticsQuerySchema }), async (req, res) => {
+router.get('/usage', isAuthenticated, validateRequest({ query: analyticsQuerySchema }), async (req, res) => {
   try {
     const { fromDate, toDate, userId, workflowId, status, category } = req.query;
     const org = req.org;

@@ -3,11 +3,9 @@ import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { requireAuth } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { auditLog } from '../utils/audit';
 import { stripe } from '../lib/stripe';
-import { isAuthenticated } from '../middleware/authMiddleware';
-import { sendSuccess, sendError } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
 import { Queue } from 'bull';
 import { createObjectCsvWriter } from 'csv-writer';
@@ -193,7 +191,7 @@ router.get('/status/:jobId', isAuthenticated, async (req, res) => {
 });
 
 // Export workflow
-router.get('/workflows/:id/export', requireAuth, exportLimiter, async (req, res) => {
+router.get('/workflows/:id/export', isAuthenticated, exportLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { includeMetadata } = req.query;
@@ -246,7 +244,7 @@ router.get('/workflows/:id/export', requireAuth, exportLimiter, async (req, res)
 });
 
 // Export analytics
-router.get('/analytics/export', requireAuth, exportLimiter, async (req, res) => {
+router.get('/analytics/export', isAuthenticated, exportLimiter, async (req, res) => {
   try {
     const { from, to } = req.query;
     const dateRange = z.object({
@@ -336,7 +334,7 @@ router.get('/analytics/export', requireAuth, exportLimiter, async (req, res) => 
 });
 
 // Export billing history
-router.get('/billing/history', requireAuth, exportLimiter, async (req, res) => {
+router.get('/billing/history', isAuthenticated, exportLimiter, async (req, res) => {
   try {
     const { from, to } = req.query;
     const dateRange = z.object({

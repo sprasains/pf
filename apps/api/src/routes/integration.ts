@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { IntegrationService } from '../services/integration';
-import { authenticate } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import { z } from 'zod';
 
@@ -9,7 +9,7 @@ const router = Router();
 // Create credential
 router.post(
   '/credentials',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     body: z.object({
       provider: z.string(),
@@ -36,7 +36,7 @@ router.post(
 // Get credential
 router.get(
   '/credentials/:id',
-  authenticate,
+  isAuthenticated,
   async (req, res, next) => {
     try {
       const credential = await IntegrationService.getCredential(
@@ -54,7 +54,7 @@ router.get(
 // List credentials
 router.get(
   '/credentials',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     query: z.object({
       provider: z.string().optional()
@@ -77,7 +77,7 @@ router.get(
 // Update credential
 router.patch(
   '/credentials/:id',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     body: z.object({
       credentials: z.any().optional(),
@@ -102,7 +102,7 @@ router.patch(
 // Delete credential
 router.delete(
   '/credentials/:id',
-  authenticate,
+  isAuthenticated,
   async (req, res, next) => {
     try {
       await IntegrationService.deleteCredential(

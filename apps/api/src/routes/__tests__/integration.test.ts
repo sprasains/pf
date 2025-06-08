@@ -2,11 +2,11 @@ import request from 'supertest';
 import express from 'express';
 import integrationRoutes from '../integration';
 import { IntegrationService } from '../../services/integration';
-import { authenticate } from '../../middleware/auth';
+import { isAuthenticated } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/validation';
 
 jest.mock('../../services/integration');
-jest.mock('../../middleware/auth');
+jest.mock('../../middleware/authMiddleware');
 jest.mock('../../middleware/validation');
 
 describe('Integration Routes', () => {
@@ -33,7 +33,7 @@ describe('Integration Routes', () => {
     app.use(express.json());
     app.use('/api/integrations', integrationRoutes);
 
-    (authenticate as jest.Mock).mockImplementation((req, res, next) => {
+    (isAuthenticated as jest.Mock).mockImplementation((req, res, next) => {
       req.user = mockUser;
       next();
     });

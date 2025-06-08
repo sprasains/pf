@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import * as userExperienceService from '../services/userExperience';
 
@@ -45,7 +45,7 @@ const router = Router();
  */
 router.post(
   '/preferences',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     body: z.object({
       theme: z.enum(['LIGHT', 'DARK']),
@@ -101,7 +101,7 @@ router.post(
  */
 router.get(
   '/preferences',
-  authenticate,
+  isAuthenticated,
   async (req, res, next) => {
     try {
       const preferences = await userExperienceService.getUserPreferences(
@@ -149,7 +149,7 @@ router.get(
  */
 router.post(
   '/activity',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     body: z.object({
       action: z.string(),
@@ -200,7 +200,7 @@ router.post(
  */
 router.get(
   '/ui-config',
-  authenticate,
+  isAuthenticated,
   async (req, res, next) => {
     try {
       const config = await userExperienceService.getUserUIConfig(
@@ -255,7 +255,7 @@ router.get(
  */
 router.get(
   '/activity',
-  authenticate,
+  isAuthenticated,
   validateRequest({
     query: z.object({
       limit: z.number().int().min(1).max(100).optional()

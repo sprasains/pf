@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import { authenticate, requireRole } from '../middleware/auth';
+import { isAuthenticated, requireRole } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validation';
 import { AppError } from '../utils/error';
 import { logger } from '../utils/logger';
@@ -98,7 +98,7 @@ const AuditLogFilterSchema = z.object({
  */
 router.get(
   '/logs',
-  authenticate,
+  isAuthenticated,
   requireRole(['OWNER', 'ADMIN']),
   validateRequest({ query: AuditLogFilterSchema }),
   async (req, res, next) => {
@@ -189,7 +189,7 @@ router.get(
  */
 router.get(
   '/logs/export',
-  authenticate,
+  isAuthenticated,
   requireRole(['OWNER']),
   validateRequest({
     query: z.object({
