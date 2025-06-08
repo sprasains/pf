@@ -284,3 +284,24 @@ docs/MONITORING.md explains how Prometheus and Grafana are set up for metrics an
 By reading through the documentation and exploring the code structure above, a newcomer can gain a comprehensive understanding of how the PumpFlix platform is organized and how to contribute effectively.
 
 
+This repository uses PNPM workspaces to manage dependencies for both the frontend and the backend. To install packages and run everything from the root folder, follow these steps:
+
+Install dependencies once at the repository root
+
+pnpm install
+(See README lines 14–23 for the initial setup including pnpm install.)
+
+Start your supporting services (database, Redis, etc.)
+
+docker-compose up -d
+as shown in the README
+
+Run migrations (if needed)
+
+pnpm prisma migrate dev
+README line 53 shows this step.
+
+Start both frontend and backend together from the root
+
+pnpm dev:all
+The README describes this command for running both services concurrently (lines 65‑72).
