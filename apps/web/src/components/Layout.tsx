@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   AppBar,
   Box,
@@ -16,8 +16,8 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Divider
-} from '@mui/material';
+  Divider,
+} from "@mui/material";
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
@@ -27,9 +27,12 @@ import {
   AccountCircle as AccountCircleIcon,
   VpnKey as CredentialsIcon,
   SmartToy as AIBuilderIcon,
-  History as AIPromptsIcon
-} from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+  History as AIPromptsIcon,
+  Brightness4 as DarkIcon,
+  Brightness7 as LightIcon,
+} from "@mui/icons-material";
+import { useAuth } from "../contexts/AuthContext";
+import { useThemeMode } from "../contexts/ThemeContext";
 
 const drawerWidth = 240;
 
@@ -41,6 +44,7 @@ export function Layout({ children }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { user, org, logout } = useAuth();
+  const { mode, toggleMode } = useThemeMode();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -62,12 +66,12 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'Workflows', icon: <WorkflowIcon />, path: '/workflows' },
-    { text: 'AI Builder', icon: <AIBuilderIcon />, path: '/ai-builder' },
-    { text: 'AI Prompts', icon: <AIPromptsIcon />, path: '/ai-prompts' },
-    { text: 'Credentials', icon: <CredentialsIcon />, path: '/credentials' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
+    { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
+    { text: "Workflows", icon: <WorkflowIcon />, path: "/workflows" },
+    { text: "AI Builder", icon: <AIBuilderIcon />, path: "/ai-builder" },
+    { text: "AI Prompts", icon: <AIPromptsIcon />, path: "/ai-prompts" },
+    { text: "Credentials", icon: <CredentialsIcon />, path: "/credentials" },
+    { text: "Settings", icon: <SettingsIcon />, path: "/settings" },
   ];
 
   const drawer = (
@@ -98,13 +102,13 @@ export function Layout({ children }: LayoutProps) {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: "flex" }}>
       <CssBaseline />
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` }
+          ml: { sm: `${drawerWidth}px` },
         }}
       >
         <Toolbar>
@@ -113,17 +117,21 @@ export function Layout({ children }: LayoutProps) {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{ mr: 2, display: { sm: "none" } }}
           >
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {menuItems.find((item) => item.path === location.pathname)?.text || 'PumpFlix'}
+            {menuItems.find((item) => item.path === location.pathname)?.text ||
+              "PumpFlix"}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Typography variant="body2" color="inherit">
               {org?.name}
             </Typography>
+            <IconButton color="inherit" onClick={toggleMode}>
+              {mode === "light" ? <DarkIcon /> : <LightIcon />}
+            </IconButton>
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -144,18 +152,20 @@ export function Layout({ children }: LayoutProps) {
               id="menu-appbar"
               anchorEl={anchorEl}
               anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right'
+                vertical: "bottom",
+                horizontal: "right",
               }}
               keepMounted
               transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right'
+                vertical: "top",
+                horizontal: "right",
               }}
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
             >
-              <MenuItem onClick={() => navigate('/settings')}>Settings</MenuItem>
+              <MenuItem onClick={() => navigate("/settings")}>
+                Settings
+              </MenuItem>
               <Divider />
               <MenuItem onClick={handleLogout}>Logout</MenuItem>
             </Menu>
@@ -171,14 +181,14 @@ export function Layout({ children }: LayoutProps) {
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true // Better open performance on mobile.
+            keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth
-            }
+            display: { xs: "block", sm: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
         >
           {drawer}
@@ -186,11 +196,11 @@ export function Layout({ children }: LayoutProps) {
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth
-            }
+            display: { xs: "none", sm: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
           open
         >
@@ -203,11 +213,11 @@ export function Layout({ children }: LayoutProps) {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px'
+          mt: "64px",
         }}
       >
         {children}
       </Box>
     </Box>
   );
-} 
+}

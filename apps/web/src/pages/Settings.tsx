@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Paper,
@@ -10,11 +10,12 @@ import {
   Switch,
   FormControlLabel,
   Divider,
-  Alert
-} from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
-import { Layout } from '../components/Layout';
-import { useSnackbar } from 'notistack';
+  Alert,
+} from "@mui/material";
+import { useAuth } from "../contexts/AuthContext";
+import { Layout } from "../components/Layout";
+import { useThemeMode } from "../contexts/ThemeContext";
+import { useSnackbar } from "notistack";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -41,15 +42,16 @@ function TabPanel(props: TabPanelProps) {
 export const Settings: React.FC = () => {
   const { user, org } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const { mode, toggleMode } = useThemeMode();
   const [tabValue, setTabValue] = useState(0);
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
-    workflowUpdates: true
+    workflowUpdates: true,
   });
   const [theme, setTheme] = useState({
     darkMode: false,
-    compactView: false
+    compactView: false,
   });
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -59,20 +61,20 @@ export const Settings: React.FC = () => {
   const handleNotificationChange = (setting: keyof typeof notifications) => {
     setNotifications((prev) => ({
       ...prev,
-      [setting]: !prev[setting]
+      [setting]: !prev[setting],
     }));
   };
 
   const handleThemeChange = (setting: keyof typeof theme) => {
     setTheme((prev) => ({
       ...prev,
-      [setting]: !prev[setting]
+      [setting]: !prev[setting],
     }));
   };
 
   const handleSavePreferences = () => {
     // TODO: Implement saving preferences
-    enqueueSnackbar('Preferences saved successfully', { variant: 'success' });
+    enqueueSnackbar("Preferences saved successfully", { variant: "success" });
   };
 
   return (
@@ -82,7 +84,7 @@ export const Settings: React.FC = () => {
           Settings
         </Typography>
 
-        <Paper sx={{ width: '100%' }}>
+        <Paper sx={{ width: "100%" }}>
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
@@ -98,14 +100,14 @@ export const Settings: React.FC = () => {
               <TextField
                 fullWidth
                 label="Email"
-                value={user?.email || ''}
+                value={user?.email || ""}
                 disabled
                 margin="normal"
               />
               <TextField
                 fullWidth
                 label="Name"
-                defaultValue={user?.name || ''}
+                defaultValue={user?.name || ""}
                 margin="normal"
               />
               <Button
@@ -128,7 +130,7 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.email}
-                    onChange={() => handleNotificationChange('email')}
+                    onChange={() => handleNotificationChange("email")}
                   />
                 }
                 label="Email Notifications"
@@ -137,7 +139,7 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.push}
-                    onChange={() => handleNotificationChange('push')}
+                    onChange={() => handleNotificationChange("push")}
                   />
                 }
                 label="Push Notifications"
@@ -146,7 +148,7 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.workflowUpdates}
-                    onChange={() => handleNotificationChange('workflowUpdates')}
+                    onChange={() => handleNotificationChange("workflowUpdates")}
                   />
                 }
                 label="Workflow Updates"
@@ -159,10 +161,7 @@ export const Settings: React.FC = () => {
               </Typography>
               <FormControlLabel
                 control={
-                  <Switch
-                    checked={theme.darkMode}
-                    onChange={() => handleThemeChange('darkMode')}
-                  />
+                  <Switch checked={mode === "dark"} onChange={toggleMode} />
                 }
                 label="Dark Mode"
               />
@@ -170,7 +169,7 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={theme.compactView}
-                    onChange={() => handleThemeChange('compactView')}
+                    onChange={() => handleThemeChange("compactView")}
                   />
                 }
                 label="Compact View"
@@ -195,14 +194,14 @@ export const Settings: React.FC = () => {
               <TextField
                 fullWidth
                 label="Organization Name"
-                value={org?.name || ''}
+                value={org?.name || ""}
                 disabled
                 margin="normal"
               />
               <TextField
                 fullWidth
                 label="Organization ID"
-                value={org?.id || ''}
+                value={org?.id || ""}
                 disabled
                 margin="normal"
               />
@@ -214,4 +213,4 @@ export const Settings: React.FC = () => {
   );
 };
 
-export default Settings; 
+export default Settings;
