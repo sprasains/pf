@@ -31,8 +31,8 @@ import InputLabel from '@mui/material/InputLabel';
 // Import MUI Date Picker components (from @mui/x-date-pickers)
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-import type { DateRange } from '@mui/x-date-pickers-pro/models';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import type { DateRange } from '@mui/x-date-pickers/models';
 import dayjs, { Dayjs } from 'dayjs';
 
 // Import Recharts components for charts
@@ -46,6 +46,10 @@ import api, { endpoints } from '@/utils/api';
 // import { DownloadOutlined, ReloadOutlined, SyncOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 // import { ExportButton } from '@/components/ExportButton'; // Keep if still used
 // import { useSocketContext } from '@/contexts/SocketContext'; // Commented out as socket is unused
+
+// Import DateRangePicker and DateRange from @mui/x-date-pickers-pro
+import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
+import type { DateRange } from '@mui/x-date-pickers-pro/models';
 
 // Keep interfaces for API data structure
 interface EngagementMetrics {

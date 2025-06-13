@@ -103,7 +103,7 @@ router.get(
   validateRequest(z.object({ query: AuditLogFilterSchema })),
   async (req: any, res: Response, next: NextFunction) => {
     try {
-      const { 
+      const {
         startDate,
         endDate,
         actionType,

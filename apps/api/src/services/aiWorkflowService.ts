@@ -1,12 +1,10 @@
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/error';
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-const openai = new OpenAIApi(configuration);
 
 const SYSTEM_PROMPT = `You are an expert workflow automation specialist. Your task is to generate a workflow based on the user's description.
 The workflow should be returned as a JSON object with the following structure:
@@ -39,7 +37,7 @@ Ensure the workflow is logical, efficient, and follows best practices for automa
 
 export const buildWorkflowFromPrompt = async (prompt: string): Promise<any> => {
   try {
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -49,7 +47,7 @@ export const buildWorkflowFromPrompt = async (prompt: string): Promise<any> => {
       max_tokens: 2000,
     });
 
-    const response = completion.data.choices[0]?.message?.content;
+    const response = completion.choices[0]?.message?.content;
     if (!response) {
       throw new AppError('Failed to generate workflow', 500);
     }

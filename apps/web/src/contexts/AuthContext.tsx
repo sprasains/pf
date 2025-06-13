@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { api } from '../lib/api';
-import { useSnackbar } from 'notistack';
+import { message } from 'antd';
+
+// Temporary flag for development to bypass authentication
+const DEV_MODE_AUTO_LOGIN = true;
 
 interface User {
   id: string;
@@ -41,8 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null
   });
 
-  const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const router = useRouter();
 
   const setAuthState = useCallback((newState: Partial<AuthState>) => {
     setState(prev => ({ ...prev, ...newState }));
@@ -61,17 +63,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false
       });
 
-      enqueueSnackbar('Login successful', { variant: 'success' });
-      navigate('/dashboard');
+      message.success('Login successful');
+      router.push('/dashboard');
     } catch (err) {
       setAuthState({
         isLoading: false,
         error: err instanceof Error ? err.message : 'Login failed'
       });
-      enqueueSnackbar('Login failed', { variant: 'error' });
+      message.error('Login failed');
       throw err;
     }
-  }, [setAuthState, navigate, enqueueSnackbar]);
+  }, [setAuthState, router]);
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');
@@ -81,8 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token: null,
       isLoading: false
     });
-    navigate('/login');
-  }, [setAuthState, navigate]);
+    if (!DEV_MODE_AUTO_LOGIN) {
+      router.push('/login');
+    }
+  }, [setAuthState, router]);
 
   const switchOrg = useCallback(async (orgId: string) => {
     try {
@@ -96,20 +100,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false
       });
 
-      enqueueSnackbar('Organization switched', { variant: 'success' });
+      message.success('Organization switched');
     } catch (err) {
       setAuthState({
         isLoading: false,
         error: err instanceof Error ? err.message : 'Failed to switch organization'
       });
-      enqueueSnackbar('Failed to switch organization', { variant: 'error' });
+      message.error('Failed to switch organization');
       throw err;
     }
-  }, [setAuthState, enqueueSnackbar]);
+  }, [setAuthState]);
 
   const refreshUser = useCallback(async () => {
     if (!state.token) {
-      setAuthState({ isLoading: false });
+      if (DEV_MODE_AUTO_LOGIN) {
+        setAuthState({
+          user: {
+            id: 'dev-user-id',
+            email: 'dev@example.com',
+            role: 'ADMIN',
+          },
+          org: {
+            id: 'dev-org-id',
+            name: 'Development Organization',
+            slug: 'dev-org',
+          },
+          token: 'dev-token',
+          isLoading: false,
+        });
+      } else {
+        setAuthState({ isLoading: false });
+      }
       return;
     }
 

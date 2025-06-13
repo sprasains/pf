@@ -1,61 +1,38 @@
 import express from 'express';
-import session from 'express-session';
-import passport from 'passport';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
+// Remove session, passport, cors, helmet, compression imports as they are handled in index.ts
 import { logger } from './utils/logger';
-import { sessionManager } from './middleware/authMiddleware';
+// import { sessionManager } from './middleware/authMiddleware'; // REMOVE THIS IMPORT
 import authRoutes from './routes/auth';
 
-// Import Passport configuration
-import './config/passport';
+// No need to import Passport configuration here, it's in index.ts
+// import './config/passport';
 
-const app = express();
+// This file should define and export a router, not an app instance
+const router = express.Router();
 
-// Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}));
+// Remove all global middleware as they are handled in index.ts
+// router.use(helmet());
+// router.use(cors({ /* ... */ }));
+// router.use(express.json());
+// router.use(express.urlencoded({ extended: true }));
+// router.use(compression());
+// router.use(session({ /* ... */ }));
+// router.use(passport.initialize());
+// router.use(passport.session());
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// sessionManager is a global middleware and should be applied in index.ts
+// router.use(sessionManager);
 
-// Compression middleware
-app.use(compression());
+// Routes specific to this router
+router.use('/auth', authRoutes); // Note: path should be relative to where this router is used
 
-// Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-}));
+// Remove error handling middleware as it's handled in index.ts
+// router.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+//   logger.error('Unhandled error:', err);
+//   res.status(err.status || 500).json({
+//     message: err.message || 'Internal server error',
+//     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+//   });
+// });
 
-// Initialize Passport and restore authentication state from session
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Session management middleware
-app.use(sessionManager);
-
-// Routes
-app.use('/api/auth', authRoutes);
-
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Unhandled error:', err);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
-});
-
-export default app; 
+export default router; // Export the router instead of the app 

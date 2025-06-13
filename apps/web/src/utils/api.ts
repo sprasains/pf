@@ -73,6 +73,7 @@ export const endpoints = {
     subscription: '/api/billing/subscription',
     portal: '/api/billing/portal',
     webhook: '/api/billing/webhook',
+    invoices: '/api/billing/invoices',
   },
   analytics: {
     usage: '/api/analytics/usage',
@@ -86,6 +87,22 @@ export const endpoints = {
   workflow: {
     list: '/api/workflows',
     execute: (id: string) => `/api/workflows/${id}/execute`,
+    clone: (id: string) => `/api/workflows/${id}/clone`,
+    archive: (id: string) => `/api/workflows/${id}/archive`,
+    createTemplate: (id: string) => `/api/workflows/${id}/template`,
+  },
+  ai: {
+    templates: '/api/ai/templates',
+  },
+  credentials: {
+    usage: '/api/credentials/usage',
+    getForWorkflow: (id: string) => `/api/metrics/workflow/${id}/credentials`,
+  },
+  websocket: {
+    sessions: {
+      start: '/api/websocket/sessions/start',
+      end: '/api/websocket/sessions/end',
+    },
   },
 };
 
@@ -97,12 +114,8 @@ export const createWorkflow = async (data: {
   description: string;
   json_schema: any;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/workflows`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.workflow.list, data);
+  return response;
 };
 
 export const logWorkflowExecution = async (workflowId: string, data: {
@@ -110,12 +123,8 @@ export const logWorkflowExecution = async (workflowId: string, data: {
   input_data: any;
   output_data: any;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/workflows/${workflowId}/execute`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.workflow.execute(workflowId), data);
+  return response;
 };
 
 // Billing
@@ -132,12 +141,8 @@ export const createInvoice = async (data: {
     total: number;
   }>;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/billing/invoices`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.billing.invoices, data);
+  return response;
 };
 
 // AI Templates
@@ -149,12 +154,8 @@ export const saveAIPromptTemplate = async (data: {
   category: string;
   metadata?: any;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/ai/templates`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.ai.templates, data);
+  return response;
 };
 
 // Credentials
@@ -163,12 +164,8 @@ export const logCredentialUsage = async (data: {
   workflow_id: string;
   execution_id: string;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/credentials/usage`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.credentials.usage, data);
+  return response;
 };
 
 // WebSocket Sessions
@@ -177,65 +174,43 @@ export const startWebSocketSession = async (data: {
   client_id: string;
   metadata?: any;
 }) => {
-  const response = await fetch(`${API_BASE_URL}/websocket/sessions/start`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.websocket.sessions.start, data);
+  return response;
 };
 
 export const endWebSocketSession = async (sessionId: string) => {
-  const response = await fetch(`${API_BASE_URL}/websocket/sessions/end`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ session_id: sessionId }),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.websocket.sessions.end, { session_id: sessionId });
+  return response;
 };
 
 // Workflow Operations
 export const cloneWorkflow = async (workflowId: string) => {
-  const response = await fetch(`${API_BASE_URL}/workflows/${workflowId}/clone`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.workflow.clone(workflowId));
+  return response;
 };
 
 export const archiveWorkflow = async (workflowId: string) => {
-  const response = await fetch(`${API_BASE_URL}/workflows/${workflowId}/archive`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.workflow.archive(workflowId));
+  return response;
 };
 
 export const createTemplateFromWorkflow = async (workflowId: string) => {
-  const response = await fetch(`${API_BASE_URL}/workflows/${workflowId}/template`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-  });
-  return handleResponse(response);
+  const response = await api.post(endpoints.workflow.createTemplate(workflowId));
+  return response;
 };
 
 // Metrics
 export const getUserUsageMetrics = async (startDate: string, endDate: string) => {
-  const response = await fetch(
-    `${API_BASE_URL}/metrics/usage?start_date=${startDate}&end_date=${endDate}`,
-    {
-      headers: await getAuthHeaders(),
-    }
-  );
-  return handleResponse(response);
+  const response = await api.get(endpoints.analytics.usage, {
+    params: {
+      startDate,
+      endDate,
+    },
+  });
+  return response;
 };
 
 export const getCredentialsForWorkflow = async (workflowId: string) => {
-  const response = await fetch(
-    `${API_BASE_URL}/metrics/workflow/${workflowId}/credentials`,
-    {
-      headers: await getAuthHeaders(),
-    }
-  );
-  return handleResponse(response);
+  const response = await api.get(endpoints.credentials.getForWorkflow(workflowId));
+  return response;
 }; 

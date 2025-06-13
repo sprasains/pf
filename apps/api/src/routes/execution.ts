@@ -310,7 +310,7 @@ router.get(
  *                     id:
  *                       type: string
  *                       format: uuid
- *                     name: 
+ *                     name:
  *                       type: string
  *                 status:
  *                   type: string
@@ -357,4 +357,4 @@ router.get(
   }
 );
 
-export default router;
+export default router; 

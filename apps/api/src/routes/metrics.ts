@@ -15,8 +15,8 @@ const prisma = new PrismaClient();
 // Validation schemas
 const timeRangeSchema = z.object({
   query: z.object({
-    start_date: z.string().datetime(),
-    end_date: z.string().datetime()
+  start_date: z.string().datetime(),
+  end_date: z.string().datetime()
   })
 });
 
@@ -120,7 +120,7 @@ router.get('/workflow/:workflowId/credentials',
   isAuthenticated,
   validateRequest(z.object({
     params: z.object({
-      workflowId: z.string().uuid()
+    workflowId: z.string().uuid()
     })
   })),
   async (req, res, next) => {

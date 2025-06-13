@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express'; // Explicitly import types
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -8,22 +8,50 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import { requestLogger, errorLogger } from './utils/logger';
 import { rateLimitMiddleware } from './middleware/rateLimit';
+import { sessionManager } from './middleware/authMiddleware'; // Import sessionManager
 import './config/passport';
 
-// Import routes
+// Import all routes
 import authRoutes from './routes/auth';
 import workflowRoutes from './routes/workflow';
 import billingRoutes from './routes/billing';
 import adminRoutes from './routes/admin';
+import analyticsRoutes from './routes/analytics';
+import aiRoutes from './routes/ai';
+import credentialsRoutes from './routes/credentials';
+import exportRoutes from './routes/export';
+import healthRoutes from './routes/health';
+import integrationRoutes from './routes/integration';
+import metricsRoutes from './routes/metrics';
+import { organizationRoutes } from './routes/organization';
+import ssoRoutes from './routes/sso';
+import { tenantRoutes } from './routes/tenant';
+import userExperienceRoutes from './routes/userExperience';
+import websocketRoutes from './routes/websocket';
+import workflowExecutionRoutes from './routes/workflowExecution';
+import workflowTemplateRoutes from './routes/workflowTemplate';
+import auditRoutes from './routes/audit';
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
+// Explicitly handle preflight OPTIONS requests for all routes
+app.options('*', cors({
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type,Authorization',
   credentials: true,
 }));
+
+// Apply CORS for all other requests
+app.use(cors({
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type,Authorization',
+  credentials: true,
+}));
+
+// Security middleware
+app.use(helmet());
 
 // Body parsing
 app.use(express.json());
@@ -49,6 +77,9 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Session management middleware (global)
+app.use(sessionManager); // Apply sessionManager globally
+
 // Logging middleware
 app.use(requestLogger);
 
@@ -57,11 +88,25 @@ app.use('/api/auth', rateLimitMiddleware.auth);
 app.use('/api', rateLimitMiddleware.api);
 
 // API routes
-console.log('authRoutes value:', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/workflows', workflowRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/credentials', credentialsRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/health', healthRoutes);
+app.use('/api/integrations', integrationRoutes);
+app.use('/api/metrics', metricsRoutes);
+app.use('/api/organizations', organizationRoutes);
+app.use('/api/sso', ssoRoutes);
+app.use('/api/tenants', tenantRoutes);
+app.use('/api/user-experience', userExperienceRoutes);
+app.use('/api/websocket', websocketRoutes);
+app.use('/api/workflow-executions', workflowExecutionRoutes);
+app.use('/api/workflow-templates', workflowTemplateRoutes);
+app.use('/api/audit', auditRoutes);
 
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -84,7 +129,7 @@ app.get('/api/health', async (_, res) => {
       uptime: process.uptime(),
     };
 
-    const statusColor = healthStatus.status === 'UP' ? '#4CAF50' : '#f44336'; // Green for UP, Red for DOWN
+    const statusColor = healthStatus.status === 'UP' ? '#4CAF50' : '#f44336';
     const databaseColor = healthStatus.database === 'connected' ? '#4CAF50' : '#f44336';
     const redisColor = healthStatus.redis === 'connected' ? '#4CAF50' : '#f44336';
 
@@ -204,7 +249,7 @@ app.get('/api/health', async (_, res) => {
       </body>
       </html>
     `);
-  } catch (error) {
+  } catch (error: any) { // Explicitly cast error to any
     res.status(500).send(`
       <!DOCTYPE html>
       <html lang="en">
@@ -266,11 +311,15 @@ app.get('/api/health', async (_, res) => {
   }
 });
 
-// Error handling
-app.use(errorLogger);
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// Error handling middleware
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  errorLogger(err, req, res, next); // Correctly use errorLogger as middleware
+  if (res.headersSent) {
+    return next(err);
+  }
   res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
+    message: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
@@ -279,5 +328,3 @@ const PORT = process.env.API_PORT || process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-export default app;

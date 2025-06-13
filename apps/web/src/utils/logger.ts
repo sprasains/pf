@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import api from './api'; // Import the axios instance
 
 // Log levels
 const LOG_LEVELS = {
@@ -47,24 +48,15 @@ class Logger {
 
   private async logToServer(level: string, message: string, data?: any) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/logs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          level,
-          message,
-          data,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          url: window.location.href
-        })
+      // Use the imported axios instance for sending logs
+      await api.post('/api/logs', {
+        level,
+        message,
+        data,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to send log to server');
-      }
     } catch (error) {
       console.error('Failed to send log to server:', error);
     }

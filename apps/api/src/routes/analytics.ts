@@ -5,6 +5,7 @@ import { logger } from '../utils/logger';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { isAuthenticated } from '../middleware/authMiddleware';
+import { validateRequest } from '../middleware/validation';
 
 const router = Router();
 const prismaClient = new PrismaClient();
